@@ -10,8 +10,8 @@ namespace Test.WebApi.Models
         public string Brand { get; set; }
         public string Model { get; set; }
         public string OperatingSystem { get; set; }
-        public int StorageCapacityGB { get; set; }
-        public int RamGB { get; set; }
+        public int? StorageCapacityGB { get; set; }
+        public int? RamGB { get; set; }
         public string Color { get; set; }
     }
 }
