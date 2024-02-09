@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
+using Test.Model.Common;
 
-namespace Test.WebApi.Models
+namespace Test.Model
 {
-    public class Shop
+    public class Shop :IShop
+
     {
         public Guid Id { get; set; }
         public string Name { get; set; }

@@ -55,9 +55,6 @@
     <Reference Include="Microsoft.Extensions.Logging.Abstractions, Version=6.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Extensions.Logging.Abstractions.6.0.0\lib\net461\Microsoft.Extensions.Logging.Abstractions.dll</HintPath>
     </Reference>
-    <Reference Include="Npgsql, Version=7.0.4.0, Culture=neutral, PublicKeyToken=5d8b90d52f46fda7, processorArchitecture=MSIL">
-      <HintPath>..\packages\Npgsql.7.0.4\lib\netstandard2.0\Npgsql.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
@@ -208,10 +205,7 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="Models\MobilePhone.cs" />
-    <Compile Include="Models\MobilePhoneFilter.cs" />
     <Compile Include="Models\MobilePhoneUpdate.cs" />
-    <Compile Include="Models\Shop.cs" />
     <Compile Include="Models\ShopUpdate.cs" />
     <Compile Include="Models\ShopView.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -356,6 +350,28 @@
     <None Include="packages.config" />
     <Content Include="Scripts\jquery-3.4.1.slim.min.map" />
     <Content Include="Scripts\jquery-3.4.1.min.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Test.Common\Test.Common.csproj">
+      <Project>{b6907028-df33-431c-a430-8f8f1f7b4db4}</Project>
+      <Name>Test.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Test.Model.Common\Test.Model.Common.csproj">
+      <Project>{31b83761-cc9a-4c4b-8a01-0407e0d456a2}</Project>
+      <Name>Test.Model.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Test.Model\Test.Model.csproj">
+      <Project>{5ab689bf-6326-4748-9980-c370407462df}</Project>
+      <Name>Test.Model</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Test.Service.Common\Test.Service.Common.csproj">
+      <Project>{c9869527-7637-42ac-8fd7-b82086561488}</Project>
+      <Name>Test.Service.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Test.Service\Test.Service.csproj">
+      <Project>{01b911ec-4b6b-4725-a9d3-514082ebc7fe}</Project>
+      <Name>Test.Service</Name>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
