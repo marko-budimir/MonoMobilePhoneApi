@@ -109,6 +109,56 @@ namespace Test.WebApi.Controllers
             return Request.CreateResponse(HttpStatusCode.Created, mobilePhone);
         }
 
+        // POST: api/MobilePhone/5
+        public HttpResponseMessage Post(Guid mobilePhoneId, [FromBody] List<Guid> shopsId)
+        {
+            if (shopsId == null || mobilePhoneId == null)
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest);
+            }
+            MobilePhone mobilePhone = GetMobilePhoneById(mobilePhoneId);
+            if (mobilePhone == null)
+            {
+                return Request.CreateResponse(HttpStatusCode.NotFound, "Mobile phone with this ID doesn't exists");
+            }
+            NpgsqlConnection connection = new NpgsqlConnection(connectionString);
+            using (connection)
+            {
+                connection.Open();
+                using (NpgsqlTransaction transaction = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        foreach (Guid shopId in shopsId)
+                        {
+                            if (GetShopById(shopId) == null)
+                            {
+                                transaction.Rollback();
+                                return Request.CreateResponse(HttpStatusCode.NotFound, $"Shop with ID: {shopId} doesn't exists");
+                            }
+                            using (NpgsqlCommand command = new NpgsqlCommand())
+                            {
+                                command.CommandText = "INSERT INTO \"MobilePhoneShop\" (\"Id\", \"MobilePhoneId\", \"ShopId\") VALUES (@id, @mobilePhoneId, @shopId)";
+                                command.Connection = connection;
+                                command.Parameters.AddWithValue("id", Guid.NewGuid());
+                                command.Parameters.AddWithValue("mobilePhoneId", mobilePhoneId);
+                                command.Parameters.AddWithValue("shopId", shopId);
+                                command.Transaction = transaction;
+                                command.ExecuteNonQuery();
+                            }
+                        }
+                        transaction.Commit();
+                    }
+                    catch (NpgsqlException e)
+                    {
+                        transaction.Rollback();
+                        return Request.CreateResponse(HttpStatusCode.BadGateway, e.Message);
+                    }
+                }
+            }
+            return Request.CreateResponse(HttpStatusCode.Created, GetMobilePhoneById(mobilePhoneId, true));
+        }
+
         // PUT: api/MobilePhone/5
         public HttpResponseMessage Put(Guid id, [FromBody] MobilePhoneUpdate mobilePhoneUpdate)
         {
@@ -299,6 +349,46 @@ namespace Test.WebApi.Controllers
                 commandText.Append(string.Join("AND ", conditions));
             }
             command.CommandText = commandText.ToString();
+        }
+
+        private Shop GetShopById(Guid id)
+        {
+            Shop shop = null;
+            NpgsqlConnection connection = new NpgsqlConnection(connectionString);
+
+            using (connection)
+            {
+                NpgsqlCommand command = new NpgsqlCommand();
+                command.CommandText = $"SELECT * FROM \"Shop\" WHERE \"Id\" = @id";
+                command.Connection = connection;
+                command.Parameters.AddWithValue("id", id);
+                try
+                {
+                    connection.Open();
+                    NpgsqlDataReader reader = command.ExecuteReader();
+                    reader.Read();
+                    if (reader.HasRows)
+                    {
+                        shop = new Shop()
+                        {
+                            Id = (Guid)reader["Id"],
+                            Name = (string)reader["Name"],
+                            Address = (string)reader["Address"],
+                            Mail = reader["Mail"] == DBNull.Value ? null : (string)reader["Mail"],
+                            PhoneNumber = reader["PhoneNumber"] == DBNull.Value ? null : (string)reader["PhoneNumber"]
+                        };
+                    }
+                }
+                catch (NpgsqlException e)
+                {
+                    throw e;
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+            return shop;
         }
     }
 }
