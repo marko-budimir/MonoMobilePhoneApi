@@ -1,8 +1,6 @@
 ﻿using Npgsql;
-using NpgsqlTypes;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -30,36 +28,43 @@ namespace Test.WebApi.Controllers
                 NpgsqlCommand command = new NpgsqlCommand();
                 command.Connection = connection;
                 ApplyFilter(command, filter);
-                connection.Open();
-                NpgsqlDataReader reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    mobilePhones.Add(new MobilePhone()
+                try {
+                    connection.Open();
+                    NpgsqlDataReader reader = command.ExecuteReader();
+                    while (reader.Read())
                     {
-                        Id = (Guid)reader["Id"],
-                        Brand = (string)reader["Brand"],
-                        Model = (string)reader["Model"],
-                        OperatingSystem = (string)reader["OperatingSystem"],
-                        StorageCapacityGB = (int)reader["StorageCapacityGB"],
-                        RamGB = (int)reader["RamGB"],
-                        Color = (string)reader["Color"]
-                    });
+                        mobilePhones.Add(new MobilePhone()
+                        {
+                            Id = (Guid)reader["Id"],
+                            Brand = (string)reader["Brand"],
+                            Model = (string)reader["Model"],
+                            OperatingSystem = (string)reader["OperatingSystem"],
+                            StorageCapacityGB = (int)reader["StorageCapacityGB"],
+                            RamGB = (int)reader["RamGB"],
+                            Color = (string)reader["Color"]
+                        });
+                    }
                 }
-                connection.Close();
+                catch (NpgsqlException e)
+                {
+                    return Request.CreateResponse(HttpStatusCode.BadGateway, e.Message);
+                }
+                finally
+                {
+                    connection.Close();
+                }
             }
-            
             return Request.CreateResponse(HttpStatusCode.OK, mobilePhones);
         }
 
         // GET: api/MobilePhone/5
-        public HttpResponseMessage Get(Guid id)
+        public HttpResponseMessage Get(Guid id, bool includeShops = false)
         {
-            var mobilePhone = GetMobilePhoneById(id);
+            var mobilePhone = GetMobilePhoneById(id, includeShops);
             if (mobilePhone == null)
             {
                 return Request.CreateResponse(HttpStatusCode.NotFound, "Mobile phone with this ID doesn't exists");
             }
-            mobilePhone.Shops = GetShopsByMobilePhoneId(id);
             return Request.CreateResponse(HttpStatusCode.OK, mobilePhone);
         }
 
@@ -86,9 +91,19 @@ namespace Test.WebApi.Controllers
                 command.Parameters.AddWithValue("storageCapacityGB", mobilePhone.StorageCapacityGB);
                 command.Parameters.AddWithValue("ramGB", mobilePhone.RamGB);
                 command.Parameters.AddWithValue("color", mobilePhone.Color);
-                connection.Open();
-                command.ExecuteNonQuery();
-                connection.Close();
+                try
+                {
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                }
+                catch (NpgsqlException e)
+                {
+                    return Request.CreateResponse(HttpStatusCode.BadGateway, e.Message);
+                }
+                finally
+                {
+                    connection.Close();
+                }
                 mobilePhone.Id = id;
             }
             return Request.CreateResponse(HttpStatusCode.Created, mobilePhone);
@@ -120,9 +135,19 @@ namespace Test.WebApi.Controllers
                 command.Parameters.AddWithValue("storageCapacityGB", mobilePhoneUpdate.StorageCapacityGB ?? mobilePhone.StorageCapacityGB);
                 command.Parameters.AddWithValue("ramGB", mobilePhoneUpdate.RamGB ?? mobilePhone.RamGB);
                 command.Parameters.AddWithValue("color", mobilePhoneUpdate.Color ?? mobilePhone.Color);
-                connection.Open();
-                command.ExecuteNonQuery();
-                connection.Close();
+                try
+                {
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                }
+                catch (NpgsqlException e)
+                {
+                    return Request.CreateResponse(HttpStatusCode.BadGateway, e.Message);
+                }
+                finally
+                {
+                    connection.Close();
+                }
             }
             return Request.CreateResponse(HttpStatusCode.OK, GetMobilePhoneById(id));
         }
@@ -148,76 +173,89 @@ namespace Test.WebApi.Controllers
                 command.CommandText = $"DELETE FROM \"MobilePhone\" WHERE \"Id\" = @id";
                 command.Connection = connection;
                 command.Parameters.AddWithValue("id", id);
-                connection.Open();
-                command.ExecuteNonQuery();
-                connection.Close();
+                try
+                {
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                }
+                catch (NpgsqlException e)
+                {
+                    return Request.CreateResponse(HttpStatusCode.BadGateway, e.Message);
+                }
+                finally
+                {
+                    connection.Close();
+                }
             }
             return Request.CreateResponse(HttpStatusCode.NoContent);
         }
 
-        private MobilePhone GetMobilePhoneById(Guid id)
+        private MobilePhone GetMobilePhoneById(Guid id, bool includeShops = false)
         {
             MobilePhone mobilePhone = null;
             NpgsqlConnection connection = new NpgsqlConnection(connectionString);
-
-            using (connection)
+            string commandText = $"SELECT * FROM \"MobilePhone\" WHERE \"Id\" = @id";
+            if (includeShops)
             {
-                NpgsqlCommand command = new NpgsqlCommand();
-                command.CommandText = $"SELECT * FROM \"MobilePhone\" WHERE \"Id\" = @id";
-                command.Connection = connection;
-                command.Parameters.AddWithValue("id", id);
-                connection.Open();
-                NpgsqlDataReader reader = command.ExecuteReader();
-                reader.Read();
-                if (reader.HasRows) {
-                    mobilePhone = new MobilePhone()
-                    {
-                        Id = (Guid)reader["Id"],
-                        Brand = (string)reader["Brand"],
-                        Model = (string)reader["Model"],
-                        OperatingSystem = (string)reader["OperatingSystem"],
-                        StorageCapacityGB = (int)reader["StorageCapacityGB"],
-                        RamGB = (int)reader["RamGB"],
-                        Color = (string)reader["Color"]
-                    };
-                }
-                connection.Close();
-            }
-
-            return mobilePhone;
-        }
-
-        private List<ShopView> GetShopsByMobilePhoneId(Guid id)
-        {
-            List<ShopView> shops = new List<ShopView>();
-            NpgsqlConnection connection = new NpgsqlConnection(connectionString);
-
-            using (connection)
-            {
-                NpgsqlCommand command = new NpgsqlCommand();
-                command.CommandText = $"SELECT \"Shop\".\"Name\", \"Shop\".\"PhoneNumber\", \"Shop\".\"Address\", \"Shop\".\"Mail\" " +
-                    $"FROM \"MobilePhoneShop\" " +
+                commandText = $"SELECT \"MobilePhone\".*, \"Shop\".\"Name\", \"Shop\".\"PhoneNumber\", \"Shop\".\"Address\", \"Shop\".\"Mail\" " +
+                    $"FROM \"MobilePhone\" " +
+                    $"LEFT JOIN \"MobilePhoneShop\" " +
+                    $"ON \"MobilePhone\".\"Id\" = \"MobilePhoneShop\".\"MobilePhoneId\" " +
                     $"LEFT JOIN \"Shop\" " +
                     $"ON \"Shop\".\"Id\" = \"MobilePhoneShop\".\"ShopId\" " +
-                    $"Where \"MobilePhoneShop\".\"MobilePhoneId\" = @id";
+                    $"Where \"MobilePhone\".\"Id\" = @id";
+            }
+            using (connection)
+            {
+                NpgsqlCommand command = new NpgsqlCommand();
+                command.CommandText = commandText;
                 command.Connection = connection;
                 command.Parameters.AddWithValue("id", id);
-                connection.Open();
-                NpgsqlDataReader reader = command.ExecuteReader();
-                while (reader.Read())
+                try
                 {
-                    shops.Add(new ShopView()
+                    connection.Open();
+                    NpgsqlDataReader reader = command.ExecuteReader();
+                    while (reader.Read())
                     {
-                        Name = (string)reader["Name"],
-                        PhoneNumber = reader["PhoneNumber"] == DBNull.Value ? null : (string)reader["PhoneNumber"],
-                        Address = (string)reader["Address"],
-                        Mail = reader["Mail"] == DBNull.Value ? null : (string)reader["Mail"]
-                    });
+                        if (mobilePhone == null)
+                        {
+                            mobilePhone = new MobilePhone()
+                            {
+                                Id = (Guid)reader["Id"],
+                                Brand = (string)reader["Brand"],
+                                Model = (string)reader["Model"],
+                                OperatingSystem = (string)reader["OperatingSystem"],
+                                StorageCapacityGB = (int)reader["StorageCapacityGB"],
+                                RamGB = (int)reader["RamGB"],
+                                Color = (string)reader["Color"]
+                            };
+                            if (includeShops)
+                            {
+                                mobilePhone.Shops = new List<ShopView>();
+                            }
+                        }
+                        if (includeShops)
+                        {
+                            mobilePhone.Shops.Add(new ShopView()
+                            {
+                                Name = (string)reader["Name"],
+                                PhoneNumber = reader["PhoneNumber"] == DBNull.Value ? null : (string)reader["PhoneNumber"],
+                                Address = (string)reader["Address"],
+                                Mail = reader["Mail"] == DBNull.Value ? null : (string)reader["Mail"]
+                            });
+                        }
+                    }
                 }
-                connection.Close();
+                catch (NpgsqlException e)
+                {
+                    throw e;
+                }
+                finally
+                {
+                    connection.Close();
+                }
             }
-
-            return shops;
+            return mobilePhone;
         }   
 
         private void ApplyFilter(NpgsqlCommand command, MobilePhoneFilter filter)
@@ -227,17 +265,17 @@ namespace Test.WebApi.Controllers
             List<string> conditions = new List<string>();
             if (filter.Brand != null)
             {
-                conditions.Add("\"Brand\" LIKE @brand ");
+                conditions.Add("\"Brand\" ILIKE @brand ");
                 command.Parameters.AddWithValue("brand", "%" + filter.Brand + "%");
             }
             if (filter.Model != null)
             {
-                conditions.Add("\"Model\" LIKE @model ");
+                conditions.Add("\"Model\" ILIKE @model ");
                 command.Parameters.AddWithValue("model", "%" + filter.Model + "%");
             }
             if (filter.OperatingSystem != null)
             {
-                conditions.Add("\"OperatingSystem\" LIKE @operatingSystem ");
+                conditions.Add("\"OperatingSystem\" ILIKE @operatingSystem ");
                 command.Parameters.AddWithValue("operatingSystem", "%" + filter.OperatingSystem + "%");
             }
             if (filter.StorageCapacityGB != null)
@@ -252,7 +290,7 @@ namespace Test.WebApi.Controllers
             }
             if (filter.Color != null)
             {
-                conditions.Add("\"Color\" LIKE @color ");
+                conditions.Add("\"Color\" ILIKE @color ");
                 command.Parameters.AddWithValue("color", "%" + filter.Color + "%");
             }
             if (conditions.Count > 0)

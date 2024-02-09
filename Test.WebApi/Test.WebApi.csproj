@@ -212,6 +212,7 @@
     <Compile Include="Models\MobilePhoneFilter.cs" />
     <Compile Include="Models\MobilePhoneUpdate.cs" />
     <Compile Include="Models\Shop.cs" />
+    <Compile Include="Models\ShopUpdate.cs" />
     <Compile Include="Models\ShopView.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
