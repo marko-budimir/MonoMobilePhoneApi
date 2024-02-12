@@ -14,12 +14,11 @@ namespace Test.WebApi.Controllers
 {
     public class ShopController : ApiController
     {
-        private string connectionString = "Server=127.0.0.1;Port=5432;Database=MonoTest;User Id=postgres;Password=postgres;";
-        private readonly IShopService shopService;
+        private readonly IShopService ShopService;
 
-        public ShopController()
+        public ShopController(IShopService shopService)
         {
-            shopService = new ShopService();
+            ShopService = shopService;
         }
 
         // GET: api/Shop
@@ -27,7 +26,7 @@ namespace Test.WebApi.Controllers
         {
             List<IShop> shops;
             try {
-                shops = await shopService.GetAllAsync();
+                shops = await ShopService.GetAllAsync();
             }
             catch (Exception e)
             {
@@ -42,7 +41,7 @@ namespace Test.WebApi.Controllers
             IShop shop;
             try 
             {
-                shop = await shopService.GetByIdAsync(id);
+                shop = await ShopService.GetByIdAsync(id);
             }
             catch (Exception e)
             {
@@ -64,7 +63,7 @@ namespace Test.WebApi.Controllers
             }
             try
             {
-                await shopService.AddAsync(shop);
+                await ShopService.AddAsync(shop);
             }
             catch (Exception e)
             {
@@ -80,21 +79,21 @@ namespace Test.WebApi.Controllers
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest);
             }
-            IShop shop = await shopService.GetByIdAsync(id);
+            IShop shop = await ShopService.GetByIdAsync(id);
             if (shop == null)
             {
                 return Request.CreateResponse(HttpStatusCode.NotFound);
             }
             try
             {
-                await shopService.UpdateAsync(id, new Shop()
+                await ShopService.UpdateAsync(id, new Shop()
                 {
                     Name = newShop.Name,
                     Address = newShop.Address,
                     Mail = newShop.Mail,
                     PhoneNumber = newShop.PhoneNumber
                 });
-                shop = await shopService.GetByIdAsync(id);
+                shop = await ShopService.GetByIdAsync(id);
             }
             catch (Exception e)
             {
@@ -106,12 +105,12 @@ namespace Test.WebApi.Controllers
         // DELETE: api/Shop/5
         public async Task<HttpResponseMessage> DeleteAsync(Guid id)
         {
-            IShop shop = await shopService.GetByIdAsync(id);
+            IShop shop = await ShopService.GetByIdAsync(id);
             if (shop == null)
             {
                 return Request.CreateResponse(HttpStatusCode.NotFound, "Shop with this ID doesn't exists");
             }
-            await shopService.DeleteAsync(id);
+            await ShopService.DeleteAsync(id);
             return Request.CreateResponse(HttpStatusCode.NoContent);
         }
     }

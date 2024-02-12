@@ -11,20 +11,20 @@ namespace Test.Service
 {
     public class MobilePhoneSerivce : IMobilePhoneService
     {
-        private readonly IMobilePhoneRepository mobilePhoneRepository;
-        private readonly ShopRepository shopRepository;
+        private readonly IMobilePhoneRepository MobilePhoneRepository;
+        private readonly IShopRepository ShopRepository;
 
-        public MobilePhoneSerivce()
+        public MobilePhoneSerivce(IMobilePhoneRepository mobilePhoneRepository, IShopRepository shopRepository)
         {
-            mobilePhoneRepository = new MobilePhoneRepository();
-            shopRepository = new ShopRepository();
+            MobilePhoneRepository = mobilePhoneRepository;
+            ShopRepository = shopRepository;
         }
 
         public async Task<List<IMobilePhone>> GetAllAsync(MobilePhoneFilter filter)
         {
             try
             {
-                return await mobilePhoneRepository.GetAllAsync(filter);
+                return await MobilePhoneRepository.GetAllAsync(filter);
             }
             catch (Exception e)
             {
@@ -36,7 +36,7 @@ namespace Test.Service
         {
             try
             {
-                return await mobilePhoneRepository.GetByIdAsync(id, includeShops);
+                return await MobilePhoneRepository.GetByIdAsync(id, includeShops);
             }
             catch (Exception e)
             {
@@ -48,7 +48,7 @@ namespace Test.Service
         {
             try
             {
-                await mobilePhoneRepository.AddAsync(mobilePhone);
+                await MobilePhoneRepository.AddAsync(mobilePhone);
             }
             catch (Exception e)
             {
@@ -62,12 +62,12 @@ namespace Test.Service
             {
                 foreach (var shopId in shopIds)
                 {
-                    if (shopRepository.GetByIdAsync(shopId) == null)
+                    if (ShopRepository.GetByIdAsync(shopId) == null)
                     {
                         throw new Exception($"Shop with id {shopId} not found");
                     }
                 }
-                await mobilePhoneRepository.AddShopsAsync(mobilePhoneId, shopIds);
+                await MobilePhoneRepository.AddShopsAsync(mobilePhoneId, shopIds);
             }
             catch (Exception e)
             {
@@ -79,7 +79,7 @@ namespace Test.Service
         {
             try
             {
-                await mobilePhoneRepository.UpdateAsync(id, mobilePhone);
+                await MobilePhoneRepository.UpdateAsync(id, mobilePhone);
             }
             catch (Exception e)
             {
@@ -91,7 +91,7 @@ namespace Test.Service
         {
             try
             {
-                await mobilePhoneRepository.DeleteAsync(id);
+                await MobilePhoneRepository.DeleteAsync(id);
             }
             catch (Exception e)
             {
