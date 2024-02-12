@@ -16,7 +16,7 @@ namespace Test.Repository
 {
     public class MobilePhoneRepository : IMobilePhoneRepository
     {
-        public List<IMobilePhone> GetAll(MobilePhoneFilter filter)
+        public async Task<List<IMobilePhone>> GetAllAsync(MobilePhoneFilter filter)
         {
             List<IMobilePhone> mobilePhones = new List<IMobilePhone>();
             NpgsqlConnection connection = new NpgsqlConnection(Constants.ConnectionString);
@@ -30,9 +30,9 @@ namespace Test.Repository
                 }
                 try
                 {
-                    connection.Open();
-                    NpgsqlDataReader reader = command.ExecuteReader();
-                    while (reader.Read())
+                    await connection.OpenAsync();
+                    NpgsqlDataReader reader = await command.ExecuteReaderAsync();
+                    while (await reader.ReadAsync())
                     {
                         mobilePhones.Add(new MobilePhone()
                         {
@@ -52,13 +52,13 @@ namespace Test.Repository
                 }
                 finally
                 {
-                    connection.Close();
+                    await connection.CloseAsync();
                 }
             }
             return mobilePhones;
         }
 
-        public IMobilePhone GetById(Guid id, bool includeShops = false)
+        public async Task<IMobilePhone> GetByIdAsync(Guid id, bool includeShops = false)
         {
             IMobilePhone mobilePhone = null;
             NpgsqlConnection connection = new NpgsqlConnection(Constants.ConnectionString);
@@ -81,9 +81,9 @@ namespace Test.Repository
                 command.Parameters.AddWithValue("id", id);
                 try
                 {
-                    connection.Open();
-                    NpgsqlDataReader reader = command.ExecuteReader();
-                    while (reader.Read())
+                    await connection.OpenAsync();
+                    NpgsqlDataReader reader = await command.ExecuteReaderAsync();
+                    while (await reader.ReadAsync())
                     {
                         if (mobilePhone == null)
                         {
@@ -121,13 +121,13 @@ namespace Test.Repository
                 }
                 finally
                 {
-                    connection.Close();
+                    await connection.CloseAsync();
                 }
             }
             return mobilePhone;
         }
 
-        public void Add(IMobilePhone mobilePhone)
+        public async Task AddAsync(IMobilePhone mobilePhone)
         {
             NpgsqlConnection connection = new NpgsqlConnection(Constants.ConnectionString);
             using (connection)
@@ -146,8 +146,8 @@ namespace Test.Repository
                 command.Parameters.AddWithValue("color", mobilePhone.Color);
                 try
                 {
-                    connection.Open();
-                    command.ExecuteNonQuery();
+                    await connection.OpenAsync();
+                    await command.ExecuteNonQueryAsync();
                 }
                 catch (NpgsqlException e)
                 {
@@ -155,14 +155,14 @@ namespace Test.Repository
                 }
                 finally
                 {
-                    connection.Close();
+                    await connection.CloseAsync();
                 }
             }
         }
 
-        public void AddShops(Guid mobilePhoneId, List<Guid> shopIds)
+        public async Task AddShopsAsync(Guid mobilePhoneId, List<Guid> shopIds)
         {
-            IMobilePhone mobilePhone = GetById(mobilePhoneId);
+            IMobilePhone mobilePhone = await GetByIdAsync(mobilePhoneId);
             if (mobilePhone == null)
             {
                 throw new Exception("MobilePhone not found");
@@ -188,20 +188,20 @@ namespace Test.Repository
                                 command.ExecuteNonQuery();
                             }
                         }
-                        transaction.Commit();
+                        await transaction.CommitAsync();
                     }
                     catch (NpgsqlException e)
                     {
-                        transaction.Rollback();
+                        await transaction.RollbackAsync();
                         throw e;
                     }
                 }
             }
         }
 
-        public void Update(Guid id, IMobilePhone newMobilePhone)
+        public async Task UpdateAsync(Guid id, IMobilePhone newMobilePhone)
         {
-            IMobilePhone mobilePhone = GetById(id); 
+            IMobilePhone mobilePhone = await GetByIdAsync(id); 
             if (mobilePhone == null)
             {
                throw new Exception("MobilePhone not found");
@@ -221,8 +221,8 @@ namespace Test.Repository
                 command.Parameters.AddWithValue("color", newMobilePhone.Color ?? mobilePhone.Color);
                 try
                 {
-                    connection.Open();
-                    command.ExecuteNonQuery();
+                    await connection.OpenAsync();
+                    await command.ExecuteNonQueryAsync();
                 }
                 catch (NpgsqlException e)
                 {
@@ -230,12 +230,12 @@ namespace Test.Repository
                 }
                 finally
                 {
-                    connection.Close();
+                    await connection.CloseAsync();
                 }
             }
         }
 
-        public void Delete(Guid id)
+        public async Task DeleteAsync(Guid id)
         {
             NpgsqlConnection connection = new NpgsqlConnection(Constants.ConnectionString);
             using (connection)
@@ -246,8 +246,8 @@ namespace Test.Repository
                 command.Parameters.AddWithValue("id", id);
                 try
                 {
-                    connection.Open();
-                    command.ExecuteNonQuery();
+                    await connection.OpenAsync();
+                    await command.ExecuteNonQueryAsync();
                 }
                 catch (NpgsqlException e)
                 {
@@ -255,7 +255,7 @@ namespace Test.Repository
                 }
                 finally
                 {
-                    connection.Close();
+                    await connection.CloseAsync();
                 }
             }
         }

@@ -20,11 +20,11 @@ namespace Test.Service
             this.shopRepository = new ShopRepository();
         }
 
-        public List<IShop> GetAll()
+        public async Task<List<IShop>> GetAllAsync()
         {
             try
             {
-                return shopRepository.GetAll();
+                return await shopRepository.GetAllAsync();
             }
             catch (Exception e)
             {
@@ -32,11 +32,11 @@ namespace Test.Service
             }
         }
 
-        public IShop GetById(Guid id)
+        public async Task<IShop> GetByIdAsync(Guid id)
         {
             try
             {
-                return shopRepository.GetById(id);
+                return await shopRepository.GetByIdAsync(id);
             }
             catch (Exception e)
             {
@@ -44,11 +44,11 @@ namespace Test.Service
             }
         }
 
-        public void Add(IShop shop)
+        public async Task AddAsync(IShop shop)
         {
             try
             {
-                shopRepository.Add(shop);
+                await shopRepository.AddAsync(shop);
             }
             catch (Exception e)
             {
@@ -56,11 +56,11 @@ namespace Test.Service
             }
         }
 
-        public void Update(Guid id, IShop shop)
+        public async Task UpdateAsync(Guid id, IShop shop)
         {
             try
             {
-                shopRepository.Update(id, shop);
+                await shopRepository.UpdateAsync(id, shop);
             }
             catch (Exception e)
             {
@@ -68,11 +68,11 @@ namespace Test.Service
             }
         }
 
-        public void Delete(Guid id)
+        public async Task DeleteAsync(Guid id)
         {
             try
             {
-                shopRepository.Delete(id);
+                await shopRepository.DeleteAsync(id);
             }
             catch (Exception e)
             {

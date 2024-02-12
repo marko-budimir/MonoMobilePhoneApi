@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Test.Common;
-using Test.Model;
 using Test.Model.Common;
 using Test.Repository;
 using Test.Repository.Common;
@@ -23,11 +20,11 @@ namespace Test.Service
             shopRepository = new ShopRepository();
         }
 
-        public List<IMobilePhone> GetAll(MobilePhoneFilter filter)
+        public async Task<List<IMobilePhone>> GetAllAsync(MobilePhoneFilter filter)
         {
             try
             {
-                return mobilePhoneRepository.GetAll(filter);
+                return await mobilePhoneRepository.GetAllAsync(filter);
             }
             catch (Exception e)
             {
@@ -35,11 +32,11 @@ namespace Test.Service
             }
         }
 
-        public IMobilePhone GetById(Guid id, bool includeShops = false)
+        public async Task<IMobilePhone> GetByIdAsync(Guid id, bool includeShops = false)
         {
             try
             {
-                return mobilePhoneRepository.GetById(id, includeShops);
+                return await mobilePhoneRepository.GetByIdAsync(id, includeShops);
             }
             catch (Exception e)
             {
@@ -47,11 +44,11 @@ namespace Test.Service
             }
         }
 
-        public void Add(IMobilePhone mobilePhone)
+        public async Task AddAsync(IMobilePhone mobilePhone)
         {
             try
             {
-                mobilePhoneRepository.Add(mobilePhone);
+                await mobilePhoneRepository.AddAsync(mobilePhone);
             }
             catch (Exception e)
             {
@@ -59,18 +56,18 @@ namespace Test.Service
             }
         }
 
-        public void AddShops(Guid mobilePhoneId, List<Guid> shopIds)
+        public async Task AddShopsAsync(Guid mobilePhoneId, List<Guid> shopIds)
         {
             try
             {
                 foreach (var shopId in shopIds)
                 {
-                    if (shopRepository.GetById(shopId) == null)
+                    if (shopRepository.GetByIdAsync(shopId) == null)
                     {
                         throw new Exception($"Shop with id {shopId} not found");
                     }
                 }
-                mobilePhoneRepository.AddShops(mobilePhoneId, shopIds);
+                await mobilePhoneRepository.AddShopsAsync(mobilePhoneId, shopIds);
             }
             catch (Exception e)
             {
@@ -78,11 +75,11 @@ namespace Test.Service
             }
         }
 
-        public void Update(Guid id, IMobilePhone mobilePhone)
+        public async Task UpdateAsync(Guid id, IMobilePhone mobilePhone)
         {
             try
             {
-                mobilePhoneRepository.Update(id, mobilePhone);
+                await mobilePhoneRepository.UpdateAsync(id, mobilePhone);
             }
             catch (Exception e)
             {
@@ -90,11 +87,11 @@ namespace Test.Service
             }
         }
 
-        public void Delete(Guid id)
+        public async Task DeleteAsync(Guid id)
         {
             try
             {
-                mobilePhoneRepository.Delete(id);
+                await mobilePhoneRepository.DeleteAsync(id);
             }
             catch (Exception e)
             {

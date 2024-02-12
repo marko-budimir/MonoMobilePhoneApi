@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using System.Web.Http;
 using Test.Model;
 using Test.Model.Common;
@@ -22,11 +23,11 @@ namespace Test.WebApi.Controllers
         }
 
         // GET: api/Shop
-        public HttpResponseMessage Get()
+        public async Task<HttpResponseMessage> GetAsync()
         {
             List<IShop> shops;
             try {
-                shops = shopService.GetAll();
+                shops = await shopService.GetAllAsync();
             }
             catch (Exception e)
             {
@@ -36,12 +37,12 @@ namespace Test.WebApi.Controllers
         }
 
         // GET: api/Shop/5
-        public HttpResponseMessage Get(Guid id)
+        public async Task<HttpResponseMessage> GetAsync(Guid id)
         {
             IShop shop;
             try 
             {
-                shop = shopService.GetById(id);
+                shop = await shopService.GetByIdAsync(id);
             }
             catch (Exception e)
             {
@@ -55,7 +56,7 @@ namespace Test.WebApi.Controllers
         }
 
         // POST: api/Shop
-        public HttpResponseMessage Post([FromBody]Shop shop)
+        public async Task<HttpResponseMessage> PostAsync([FromBody]Shop shop)
         {
             if (shop == null)
             {
@@ -63,7 +64,7 @@ namespace Test.WebApi.Controllers
             }
             try
             {
-                shopService.Add(shop);
+                await shopService.AddAsync(shop);
             }
             catch (Exception e)
             {
@@ -73,27 +74,27 @@ namespace Test.WebApi.Controllers
         }
 
         // PUT: api/Shop/5
-        public HttpResponseMessage Put(Guid id, [FromBody]ShopUpdate newShop)
+        public async Task<HttpResponseMessage> PutAsync(Guid id, [FromBody]ShopUpdate newShop)
         {
             if (newShop == null)
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest);
             }
-            IShop shop = shopService.GetById(id);
+            IShop shop = await shopService.GetByIdAsync(id);
             if (shop == null)
             {
                 return Request.CreateResponse(HttpStatusCode.NotFound);
             }
             try
             {
-                shopService.Update(id, new Shop()
+                await shopService.UpdateAsync(id, new Shop()
                 {
                     Name = newShop.Name,
                     Address = newShop.Address,
                     Mail = newShop.Mail,
                     PhoneNumber = newShop.PhoneNumber
                 });
-                shop = shopService.GetById(id);
+                shop = await shopService.GetByIdAsync(id);
             }
             catch (Exception e)
             {
@@ -103,14 +104,14 @@ namespace Test.WebApi.Controllers
         }
 
         // DELETE: api/Shop/5
-        public HttpResponseMessage Delete(Guid id)
+        public async Task<HttpResponseMessage> DeleteAsync(Guid id)
         {
-            IShop shop = shopService.GetById(id);
+            IShop shop = await shopService.GetByIdAsync(id);
             if (shop == null)
             {
                 return Request.CreateResponse(HttpStatusCode.NotFound, "Shop with this ID doesn't exists");
             }
-            shopService.Delete(id);
+            await shopService.DeleteAsync(id);
             return Request.CreateResponse(HttpStatusCode.NoContent);
         }
     }

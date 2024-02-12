@@ -11,11 +11,11 @@ namespace Test.Service.Common
 {
     public interface IMobilePhoneService
     {
-        List<IMobilePhone> GetAll(MobilePhoneFilter filter);
-        IMobilePhone GetById(Guid id, bool includeShops = false);
-        void Add(IMobilePhone mobilePhone);
-        void AddShops(Guid mobilePhoneId, List<Guid> shopIds);
-        void Update(Guid id, IMobilePhone mobilePhone);
-        void Delete(Guid id);
+        Task<List<IMobilePhone>> GetAllAsync(MobilePhoneFilter filter);
+        Task<IMobilePhone> GetByIdAsync(Guid id, bool includeShops = false);
+        Task AddAsync(IMobilePhone mobilePhone);
+        Task AddShopsAsync(Guid mobilePhoneId, List<Guid> shopIds);
+        Task UpdateAsync(Guid id, IMobilePhone mobilePhone);
+        Task DeleteAsync(Guid id);
     }
 }

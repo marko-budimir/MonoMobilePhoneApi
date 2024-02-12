@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using System.Web.Http;
 using Test.Common;
 using Test.Model;
@@ -18,11 +19,11 @@ namespace Test.WebApi.Controllers
 
         // GET: api/MobilePhone
         //filter by brand, model, operating system, storage capacity, ram, color
-        public HttpResponseMessage Get([FromUri] MobilePhoneFilter filter)
+        public async Task<HttpResponseMessage> GetAsync([FromUri] MobilePhoneFilter filter)
         {
             List<IMobilePhone> mobilePhones;
             try { 
-                mobilePhones = mobilePhoneService.GetAll(filter);
+                mobilePhones = await mobilePhoneService.GetAllAsync(filter);
             }
             catch (Exception e)
             {
@@ -32,9 +33,9 @@ namespace Test.WebApi.Controllers
         }
 
         // GET: api/MobilePhone/5
-        public HttpResponseMessage Get(Guid id, bool includeShops = false)
+        public async Task<HttpResponseMessage> GetAsync(Guid id, bool includeShops = false)
         {
-            IMobilePhone mobilePhone = mobilePhoneService.GetById(id, includeShops);
+            IMobilePhone mobilePhone = await mobilePhoneService.GetByIdAsync(id, includeShops);
             if (mobilePhone == null)
             {
                 return Request.CreateResponse(HttpStatusCode.NotFound, "Mobile phone with this ID doesn't exists");
@@ -43,7 +44,7 @@ namespace Test.WebApi.Controllers
         }
 
         // POST: api/MobilePhone
-        public HttpResponseMessage Post([FromBody] MobilePhone mobilePhone)
+        public async Task<HttpResponseMessage> PostAsync([FromBody] MobilePhone mobilePhone)
         {
             if (mobilePhone == null)
             {
@@ -52,7 +53,7 @@ namespace Test.WebApi.Controllers
 
             try 
             { 
-                mobilePhoneService.Add(mobilePhone);
+                await mobilePhoneService.AddAsync(mobilePhone);
             }
             catch (Exception e)
             {
@@ -62,13 +63,13 @@ namespace Test.WebApi.Controllers
         }
 
         // POST: api/MobilePhone/5
-        public HttpResponseMessage Post(Guid mobilePhoneId, [FromBody] List<Guid> shopsId)
+        public async Task<HttpResponseMessage> PostAsync(Guid mobilePhoneId, [FromBody] List<Guid> shopsId)
         {
             if (shopsId == null || mobilePhoneId == null)
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest);
             }
-            IMobilePhone mobilePhone = mobilePhoneService.GetById(mobilePhoneId);
+            IMobilePhone mobilePhone = await mobilePhoneService.GetByIdAsync(mobilePhoneId);
             if (mobilePhone == null)
             {
                 return Request.CreateResponse(HttpStatusCode.NotFound, "Mobile phone with this ID doesn't exists");
@@ -76,8 +77,8 @@ namespace Test.WebApi.Controllers
 
             try
             {
-                mobilePhoneService.AddShops(mobilePhoneId, shopsId);
-                mobilePhone = mobilePhoneService.GetById(mobilePhoneId, true);
+                await mobilePhoneService.AddShopsAsync(mobilePhoneId, shopsId);
+                mobilePhone = await mobilePhoneService.GetByIdAsync(mobilePhoneId, true);
             }
             catch (Exception e)
             {
@@ -87,13 +88,13 @@ namespace Test.WebApi.Controllers
         }
 
         // PUT: api/MobilePhone/5
-        public HttpResponseMessage Put(Guid id, [FromBody] MobilePhoneUpdate mobilePhoneUpdate)
+        public async Task<HttpResponseMessage> PutAsync(Guid id, [FromBody] MobilePhoneUpdate mobilePhoneUpdate)
         {
             if (mobilePhoneUpdate == null)
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest);
             }
-            IMobilePhone mobilePhone = mobilePhoneService.GetById(id);
+            IMobilePhone mobilePhone = await mobilePhoneService.GetByIdAsync(id);
             if (mobilePhone == null)
             {
                 return Request.CreateResponse(HttpStatusCode.NotFound, "Mobile phone with this ID doesn't exists");
@@ -101,12 +102,12 @@ namespace Test.WebApi.Controllers
 
             try
             {
-                mobilePhoneService.Update(id, new MobilePhone()
+                await mobilePhoneService.UpdateAsync(id, new MobilePhone()
                 {
                     OperatingSystem = mobilePhoneUpdate.OperatingSystem,
                     Color = mobilePhoneUpdate.Color
                 });
-                mobilePhone = mobilePhoneService.GetById(id);
+                mobilePhone = await mobilePhoneService.GetByIdAsync(id);
             }
             catch (Exception e)
             {
@@ -116,13 +117,13 @@ namespace Test.WebApi.Controllers
         }
 
         // DELETE: api/MobilePhone/5
-        public HttpResponseMessage Delete(Guid id)
+        public async Task<HttpResponseMessage> DeleteAsync(Guid id)
         {
             if(id == null)
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest);
             }
-            IMobilePhone mobilePhone = mobilePhoneService.GetById(id);
+            IMobilePhone mobilePhone = await mobilePhoneService.GetByIdAsync(id);
 
             if (mobilePhone == null)
             {
@@ -131,7 +132,7 @@ namespace Test.WebApi.Controllers
 
             try
             {
-                mobilePhoneService.Delete(id);
+                await mobilePhoneService.DeleteAsync(id);
             }
             catch (Exception e)
             {

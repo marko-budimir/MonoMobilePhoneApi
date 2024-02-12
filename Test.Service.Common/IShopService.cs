@@ -10,10 +10,10 @@ namespace Test.Service.Common
 {
     public interface IShopService
     {
-        List<IShop> GetAll();
-        IShop GetById(Guid id);
-        void Add(IShop shop);
-        void Update(Guid id, IShop shop);
-        void Delete(Guid id);
+        Task<List<IShop>> GetAllAsync();
+        Task<IShop> GetByIdAsync(Guid id);
+        Task AddAsync(IShop shop);
+        Task UpdateAsync(Guid id, IShop shop);
+        Task DeleteAsync(Guid id);
     }
 }

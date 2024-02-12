@@ -14,7 +14,7 @@ namespace Test.Repository
 {
     public class ShopRepository : IShopRepository
     {
-        public List<IShop> GetAll()
+        public async Task<List<IShop>> GetAllAsync()
         {
             List<IShop> shops = new List<IShop>();
             NpgsqlConnection connection = new NpgsqlConnection(Constants.ConnectionString);
@@ -25,9 +25,9 @@ namespace Test.Repository
                 command.Connection = connection;
                 try
                 {
-                    connection.Open();
-                    NpgsqlDataReader reader = command.ExecuteReader();
-                    while (reader.Read())
+                    await connection.OpenAsync();
+                    NpgsqlDataReader reader = await command.ExecuteReaderAsync();
+                    while (await reader.ReadAsync())
                     {
                         shops.Add(new Shop()
                         {
@@ -46,13 +46,13 @@ namespace Test.Repository
                 }
                 finally
                 {
-                    connection.Close();
+                    await connection.CloseAsync();
                 }
             }
             return shops;
         }
 
-        public IShop GetById(Guid id)
+        public async Task<IShop> GetByIdAsync(Guid id)
         {
             IShop shop = null;
             NpgsqlConnection connection = new NpgsqlConnection(Constants.ConnectionString);
@@ -65,9 +65,9 @@ namespace Test.Repository
                 command.Parameters.AddWithValue("id", id);
                 try
                 {
-                    connection.Open();
-                    NpgsqlDataReader reader = command.ExecuteReader();
-                    reader.Read();
+                    await connection.OpenAsync();
+                    NpgsqlDataReader reader = await command.ExecuteReaderAsync();
+                    await reader.ReadAsync();
                     if (reader.HasRows)
                     {
                         shop = new Shop()
@@ -86,13 +86,13 @@ namespace Test.Repository
                 }
                 finally
                 {
-                    connection.Close();
+                    await connection.CloseAsync();
                 }
             }
             return shop;
         }
 
-        public void Add(IShop shop)
+        public async Task AddAsync(IShop shop)
         {
             NpgsqlConnection connection = new NpgsqlConnection(Constants.ConnectionString);
             using (connection)
@@ -122,8 +122,8 @@ namespace Test.Repository
                 }
                 try
                 {
-                    connection.Open();
-                    command.ExecuteNonQuery();
+                    await connection.OpenAsync();
+                    await command.ExecuteNonQueryAsync();
                 }
                 catch (NpgsqlException e)
                 {
@@ -131,14 +131,14 @@ namespace Test.Repository
                 }
                 finally
                 {
-                    connection.Close();
+                    await connection.CloseAsync();
                 }
             }
         }
 
-        public void Update(Guid id, IShop newShop)
+        public async Task UpdateAsync(Guid id, IShop newShop)
         {
-            IShop shop = GetById(id);
+            IShop shop = await GetByIdAsync(id);
             NpgsqlConnection connection = new NpgsqlConnection(Constants.ConnectionString);
             using (connection)
             {
@@ -166,8 +166,8 @@ namespace Test.Repository
                 }
                 try
                 {
-                    connection.Open();
-                    command.ExecuteNonQuery();
+                    await connection.OpenAsync();
+                    await command.ExecuteNonQueryAsync();
                 }
                 catch (NpgsqlException e)
                 {
@@ -175,12 +175,12 @@ namespace Test.Repository
                 }
                 finally
                 {
-                    connection.Close();
+                    await connection.CloseAsync();
                 }
             }
         }
 
-        public void Delete(Guid id)
+        public async Task DeleteAsync(Guid id)
         {
             NpgsqlConnection connection = new NpgsqlConnection(Constants.ConnectionString);
             using (connection)
@@ -191,8 +191,8 @@ namespace Test.Repository
                 command.Parameters.AddWithValue("id", id);
                 try
                 {
-                    connection.Open();
-                    command.ExecuteNonQuery();
+                    await connection.OpenAsync();
+                    await command.ExecuteNonQueryAsync();
                 }
                 catch (NpgsqlException e)
                 {
@@ -200,7 +200,7 @@ namespace Test.Repository
                 }
                 finally
                 {
-                    connection.Close();
+                    await connection.CloseAsync();
                 }
             }
         }
