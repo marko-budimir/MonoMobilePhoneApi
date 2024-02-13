@@ -14,7 +14,7 @@ namespace Test.Repository
 {
     public class MobilePhoneRepository : IMobilePhoneRepository
     {
-        public async Task<List<IMobilePhone>> GetAllAsync(MobilePhoneFilter filter)
+        public async Task<List<IMobilePhone>> GetAllAsync(MobilePhoneFilter filter, Sorting sorting, Paging paging)
         {
             List<IMobilePhone> mobilePhones = new List<IMobilePhone>();
             NpgsqlConnection connection = new NpgsqlConnection(Constants.ConnectionString);
@@ -25,6 +25,8 @@ namespace Test.Repository
                 if (filter != null)
                 {
                     ApplyFilter(command, filter);
+                    ApplySorting(command, sorting);
+                    await ApplyPagingAsync(command, paging);
                 }
                 try
                 {
@@ -257,44 +259,93 @@ namespace Test.Repository
         private void ApplyFilter(NpgsqlCommand command, MobilePhoneFilter filter)
         {
             StringBuilder commandText = new StringBuilder();
-            commandText.Append("SELECT * FROM \"MobilePhone\" ");
-            List<string> conditions = new List<string>();
-            if (filter.Brand != null)
+            commandText.Append("SELECT * FROM \"MobilePhone\"");
+            if(filter.ShopId != null)
             {
-                conditions.Add("\"Brand\" ILIKE @brand ");
-                command.Parameters.AddWithValue("brand", "%" + filter.Brand + "%");
+                commandText.Append(" LEFT JOIN \"MobilePhoneShop\" ON \"MobilePhone\".\"Id\" = \"MobilePhoneShop\".\"MobilePhoneId\" WHERE \"MobilePhoneShop\".\"ShopId\" = @shopId");
+                command.Parameters.AddWithValue("shopId", filter.ShopId);
             }
-            if (filter.Model != null)
+            else
             {
-                conditions.Add("\"Model\" ILIKE @model ");
-                command.Parameters.AddWithValue("model", "%" + filter.Model + "%");
+                commandText.Append(" WHERE 1 = 1");
             }
-            if (filter.OperatingSystem != null)
+            if (filter.SearchQuery != null)
             {
-                conditions.Add("\"OperatingSystem\" ILIKE @operatingSystem ");
-                command.Parameters.AddWithValue("operatingSystem", "%" + filter.OperatingSystem + "%");
+                string[] keyWords = filter.SearchQuery.Split(' ');
+                for(int i = 0; i < keyWords.Length; i++)
+                {
+                    commandText.Append($" AND (\"Brand\" ILIKE @searchQuery{i} OR \"Model\" ILIKE @searchQuery{i}")
+                        .Append($" OR \"OperatingSystem\" ILIKE @searchQuery{i} OR \"Color\" ILIKE @searchQuery{i})");
+                    command.Parameters.AddWithValue($"searchQuery{i}", "%" + keyWords[i] + "%");
+                }
             }
-            if (filter.StorageCapacityGB != null)
+            if (filter.MinStorageCapacityGB != null)
             {
-                conditions.Add("\"StorageCapacityGB\" = @storageCapacityGB ");
-                command.Parameters.AddWithValue("storageCapacityGB", filter.StorageCapacityGB);
+                commandText.Append(" AND \"StorageCapacityGB\" >= @minStorageCapacityGB");
+                command.Parameters.AddWithValue("minStorageCapacityGB", filter.MinStorageCapacityGB);
             }
-            if (filter.RamGB != null)
+            if (filter.MaxStorageCapacityGB != null)
             {
-                conditions.Add("\"RamGB\" = @ramGB ");
-                command.Parameters.AddWithValue("ramGB", filter.RamGB);
+                commandText.Append(" AND \"StorageCapacityGB\" <= @maxStorageCapacityGB");
+                command.Parameters.AddWithValue("maxStorageCapacityGB", filter.MaxStorageCapacityGB);
             }
-            if (filter.Color != null)
+            if (filter.MinRamGB != null)
             {
-                conditions.Add("\"Color\" ILIKE @color ");
-                command.Parameters.AddWithValue("color", "%" + filter.Color + "%");
+                commandText.Append(" AND \"RamGB\" >= @minRamGB");
+                command.Parameters.AddWithValue("minRamGB", filter.MinRamGB);
             }
-            if (conditions.Count > 0)
+            if (filter.MaxRamGB != null)
             {
-                commandText.Append("WHERE ");
-                commandText.Append(string.Join("AND ", conditions));
+                commandText.Append(" AND \"RamGB\" <= @maxRamGB");
+                command.Parameters.AddWithValue("maxRamGB", filter.MaxRamGB);
             }
             command.CommandText = commandText.ToString();
+        }
+
+        private void ApplySorting(NpgsqlCommand command, Sorting sorting)
+        {
+            StringBuilder commandText = new StringBuilder(command.CommandText);
+            commandText.Append(" ORDER BY \"");
+            commandText.Append(sorting.SortBy).Append("\" ");
+            commandText.Append(sorting.IsAscending ? "ASC" : "DESC");
+            command.CommandText = commandText.ToString();
+        }
+
+        private async Task ApplyPagingAsync(NpgsqlCommand command, Paging paging)
+        {
+            StringBuilder commandText = new StringBuilder(command.CommandText);
+            int itemCount = await GetItemCountAsync();
+            int currentItem = (paging.PageNumber - 1) * paging.PageSize;
+            if (currentItem >= 0 && currentItem < itemCount)
+            {
+                commandText.Append(" LIMIT ").Append(paging.PageSize).Append(" OFFSET ").Append(currentItem);
+                command.CommandText = commandText.ToString();
+            }
+        }
+
+        private async Task<int> GetItemCountAsync() 
+        {
+            NpgsqlConnection connection = new NpgsqlConnection(Constants.ConnectionString);
+            using (connection)
+            {
+                NpgsqlCommand command = new NpgsqlCommand();
+                command.CommandText = "SELECT COUNT(\"Id\") FROM \"MobilePhone\"";
+                command.Connection = connection;
+                try
+                {
+                    await connection.OpenAsync();
+                    NpgsqlDataReader reader = await command.ExecuteReaderAsync();
+                    await reader.ReadAsync();
+                    return reader.GetInt32(0);
+                }
+                catch (Exception e)
+                {
+                    return 0;
+                }
+                finally { 
+                    await connection.CloseAsync(); 
+                }
+            }
         }
     }
 }

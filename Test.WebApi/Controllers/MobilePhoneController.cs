@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing.Printing;
+using System.Globalization;
 using System.Net;
 using System.Net.Http;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using System.Threading.Tasks;
 using System.Web.Http;
 using Test.Common;
@@ -23,11 +26,41 @@ namespace Test.WebApi.Controllers
 
         // GET: api/MobilePhone
         //filter by brand, model, operating system, storage capacity, ram, color
-        public async Task<HttpResponseMessage> GetAsync([FromUri] MobilePhoneFilter filter)
+        public async Task<HttpResponseMessage> GetAsync(
+            string searchQuery = "",
+            Guid? shopId = null,
+            int? minStorageCapacityGB = null,
+            int? maxStorageCapacityGB = null,
+            int? minRamGB = null,
+            int? maxRamGB = null,
+            string sortBy = "Brand",
+            bool isAscending = true,
+            int pageNumber = 1,
+            int pageSize = 10
+            )
         {
+            MobilePhoneFilter filter = new MobilePhoneFilter
+            {
+                SearchQuery = searchQuery,
+                ShopId = shopId,
+                MinStorageCapacityGB = minStorageCapacityGB,
+                MaxStorageCapacityGB = maxStorageCapacityGB,
+                MinRamGB = minRamGB,
+                MaxRamGB = maxRamGB
+            };
+            Sorting sorting = new Sorting
+            {
+                SortBy = sortBy,
+                IsAscending = isAscending
+            };
+            Paging paging = new Paging
+            {
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
             List<IMobilePhone> mobilePhones;
             try { 
-                mobilePhones = await _mobilePhoneService.GetAllAsync(filter);
+                mobilePhones = await _mobilePhoneService.GetAllAsync(filter, sorting, paging);
             }
             catch (Exception e)
             {
