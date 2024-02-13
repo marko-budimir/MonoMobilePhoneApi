@@ -92,7 +92,7 @@ namespace Test.Repository
             return shop;
         }
 
-        public async Task AddAsync(IShop shop)
+        public async Task<int> AddAsync(IShop shop)
         {
             NpgsqlConnection connection = new NpgsqlConnection(Constants.ConnectionString);
             using (connection)
@@ -100,34 +100,19 @@ namespace Test.Repository
                 NpgsqlCommand command = new NpgsqlCommand();
                 command.CommandText = "INSERT INTO \"Shop\" (\"Id\", \"Name\", \"Address\", \"Mail\", \"PhoneNumber\") VALUES (@id, @name, @address, @mail, @PhoneNumber)";
                 command.Connection = connection;
-                Guid id = Guid.NewGuid();
-                command.Parameters.AddWithValue("id", id);
+                command.Parameters.AddWithValue("id", shop.Id);
                 command.Parameters.AddWithValue("name", shop.Name);
                 command.Parameters.AddWithValue("address", shop.Address);
-                if (shop.Mail != null)
-                {
-                    command.Parameters.AddWithValue("mail", shop.Mail);
-                }
-                else
-                {
-                    command.Parameters.AddWithValue("mail", DBNull.Value);
-                }
-                if (shop.PhoneNumber != null)
-                {
-                    command.Parameters.AddWithValue("PhoneNumber", shop.PhoneNumber);
-                }
-                else
-                {
-                    command.Parameters.AddWithValue("PhoneNumber", DBNull.Value);
-                }
+                AddNullableParameter(command, "mail", shop.Mail);
+                AddNullableParameter(command, "PhoneNumber", shop.PhoneNumber);
                 try
                 {
                     await connection.OpenAsync();
-                    await command.ExecuteNonQueryAsync();
+                    return await command.ExecuteNonQueryAsync();
                 }
-                catch (NpgsqlException e)
+                catch
                 {
-                    throw e;
+                    return -1;
                 }
                 finally
                 {
@@ -136,9 +121,13 @@ namespace Test.Repository
             }
         }
 
-        public async Task UpdateAsync(Guid id, IShop newShop)
+        public async Task<int> UpdateAsync(Guid id, IShop newShop)
         {
             IShop shop = await GetByIdAsync(id);
+            if (shop == null)
+            {
+                return 0;
+            }
             NpgsqlConnection connection = new NpgsqlConnection(Constants.ConnectionString);
             using (connection)
             {
@@ -148,30 +137,16 @@ namespace Test.Repository
                 command.Parameters.AddWithValue("id", id);
                 command.Parameters.AddWithValue("name", newShop.Name ?? shop.Name);
                 command.Parameters.AddWithValue("address", newShop.Address ?? shop.Address);
-                if (newShop.Mail != null || shop.Mail != null)
-                {
-                    command.Parameters.AddWithValue("mail", newShop.Mail ?? shop.Mail);
-                }
-                else
-                {
-                    command.Parameters.AddWithValue("mail", DBNull.Value);
-                }
-                if (newShop.PhoneNumber != null || shop.PhoneNumber != null)
-                {
-                    command.Parameters.AddWithValue("PhoneNumber", newShop.PhoneNumber ?? shop.PhoneNumber);
-                }
-                else
-                {
-                    command.Parameters.AddWithValue("PhoneNumber", DBNull.Value);
-                }
+                AddNullableParameter(command, "mail", newShop.Mail ?? shop.Mail);
+                AddNullableParameter(command, "PhoneNumber", newShop.PhoneNumber ?? shop.PhoneNumber);
                 try
                 {
                     await connection.OpenAsync();
-                    await command.ExecuteNonQueryAsync();
+                    return await command.ExecuteNonQueryAsync();
                 }
-                catch (NpgsqlException e)
+                catch
                 {
-                    throw e;
+                    return -1;
                 }
                 finally
                 {
@@ -180,7 +155,7 @@ namespace Test.Repository
             }
         }
 
-        public async Task DeleteAsync(Guid id)
+        public async Task<int> DeleteAsync(Guid id)
         {
             NpgsqlConnection connection = new NpgsqlConnection(Constants.ConnectionString);
             using (connection)
@@ -192,17 +167,23 @@ namespace Test.Repository
                 try
                 {
                     await connection.OpenAsync();
-                    await command.ExecuteNonQueryAsync();
+                    return await command.ExecuteNonQueryAsync();
                 }
-                catch (NpgsqlException e)
+                catch
                 {
-                    throw e;
+                    return -1;
                 }
                 finally
                 {
                     await connection.CloseAsync();
                 }
             }
+        }
+
+        private void AddNullableParameter(NpgsqlCommand command, string paramName, object value)
+        {
+            NpgsqlParameter parameter = new NpgsqlParameter(paramName, value ?? DBNull.Value);
+            command.Parameters.Add(parameter);
         }
     }
 }

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Test.Common;
 using Test.Model.Common;
-using Test.Repository;
 using Test.Repository.Common;
 using Test.Service.Common;
 
@@ -11,20 +10,20 @@ namespace Test.Service
 {
     public class MobilePhoneSerivce : IMobilePhoneService
     {
-        private readonly IMobilePhoneRepository MobilePhoneRepository;
-        private readonly IShopRepository ShopRepository;
+        private readonly IMobilePhoneRepository _mobilePhoneRepository;
+        private readonly IShopRepository _shopRepository;
 
         public MobilePhoneSerivce(IMobilePhoneRepository mobilePhoneRepository, IShopRepository shopRepository)
         {
-            MobilePhoneRepository = mobilePhoneRepository;
-            ShopRepository = shopRepository;
+            _mobilePhoneRepository = mobilePhoneRepository;
+            _shopRepository = shopRepository;
         }
 
         public async Task<List<IMobilePhone>> GetAllAsync(MobilePhoneFilter filter)
         {
             try
             {
-                return await MobilePhoneRepository.GetAllAsync(filter);
+                return await _mobilePhoneRepository.GetAllAsync(filter);
             }
             catch (Exception e)
             {
@@ -36,7 +35,7 @@ namespace Test.Service
         {
             try
             {
-                return await MobilePhoneRepository.GetByIdAsync(id, includeShops);
+                return await _mobilePhoneRepository.GetByIdAsync(id, includeShops);
             }
             catch (Exception e)
             {
@@ -44,59 +43,39 @@ namespace Test.Service
             }
         }
 
-        public async Task AddAsync(IMobilePhone mobilePhone)
+        public async Task<int> AddAsync(IMobilePhone mobilePhone)
         {
-            try
-            {
-                await MobilePhoneRepository.AddAsync(mobilePhone);
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
+            return await _mobilePhoneRepository.AddAsync(mobilePhone);
         }
 
-        public async Task AddShopsAsync(Guid mobilePhoneId, List<Guid> shopIds)
+        public async Task<int> AddShopsAsync(Guid mobilePhoneId, List<Guid> shopIds)
         {
             try
             {
                 foreach (var shopId in shopIds)
                 {
-                    if (ShopRepository.GetByIdAsync(shopId) == null)
+                    if (_shopRepository.GetByIdAsync(shopId) == null)
                     {
                         throw new Exception($"Shop with id {shopId} not found");
                     }
                 }
-                await MobilePhoneRepository.AddShopsAsync(mobilePhoneId, shopIds);
             }
             catch (Exception e)
             {
-                throw e;
+                   throw e;
             }
+            return await _mobilePhoneRepository.AddShopsAsync(mobilePhoneId, shopIds);
+
         }
 
-        public async Task UpdateAsync(Guid id, IMobilePhone mobilePhone)
+        public async Task<int> UpdateAsync(Guid id, IMobilePhone mobilePhone)
         {
-            try
-            {
-                await MobilePhoneRepository.UpdateAsync(id, mobilePhone);
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
+            return await _mobilePhoneRepository.UpdateAsync(id, mobilePhone);
         }
 
-        public async Task DeleteAsync(Guid id)
+        public async Task<int> DeleteAsync(Guid id)
         {
-            try
-            {
-                await MobilePhoneRepository.DeleteAsync(id);
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
+            return await _mobilePhoneRepository.DeleteAsync(id);
         }
     }
 }

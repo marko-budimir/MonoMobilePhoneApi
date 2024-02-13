@@ -13,9 +13,9 @@ namespace Test.Repository.Common
     {
         Task<List<IMobilePhone>> GetAllAsync(MobilePhoneFilter filter);
         Task<IMobilePhone> GetByIdAsync(Guid id, bool includeShops = false);
-        Task AddAsync(IMobilePhone mobilePhone);
-        Task AddShopsAsync(Guid mobilePhoneId, List<Guid> shopIds);
-        Task UpdateAsync(Guid id, IMobilePhone mobilePhone);
-        Task DeleteAsync(Guid id);
+        Task<int> AddAsync(IMobilePhone mobilePhone);
+        Task<int> AddShopsAsync(Guid mobilePhoneId, List<Guid> shopIds);
+        Task<int> UpdateAsync(Guid id, IMobilePhone mobilePhone);
+        Task<int> DeleteAsync(Guid id);
     }
 }

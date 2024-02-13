@@ -14,11 +14,11 @@ namespace Test.WebApi.Controllers
 {
     public class MobilePhoneController : ApiController
     {
-        private readonly IMobilePhoneService MobilePhoneService;
+        private readonly IMobilePhoneService _mobilePhoneService;
 
         public MobilePhoneController(IMobilePhoneService mobilePhoneService)
         {
-            MobilePhoneService = mobilePhoneService;
+            _mobilePhoneService = mobilePhoneService;
         }
 
         // GET: api/MobilePhone
@@ -27,7 +27,7 @@ namespace Test.WebApi.Controllers
         {
             List<IMobilePhone> mobilePhones;
             try { 
-                mobilePhones = await MobilePhoneService.GetAllAsync(filter);
+                mobilePhones = await _mobilePhoneService.GetAllAsync(filter);
             }
             catch (Exception e)
             {
@@ -39,7 +39,7 @@ namespace Test.WebApi.Controllers
         // GET: api/MobilePhone/5
         public async Task<HttpResponseMessage> GetAsync(Guid id, bool includeShops = false)
         {
-            IMobilePhone mobilePhone = await MobilePhoneService.GetByIdAsync(id, includeShops);
+            IMobilePhone mobilePhone = await _mobilePhoneService.GetByIdAsync(id, includeShops);
             if (mobilePhone == null)
             {
                 return Request.CreateResponse(HttpStatusCode.NotFound, "Mobile phone with this ID doesn't exists");
@@ -48,22 +48,30 @@ namespace Test.WebApi.Controllers
         }
 
         // POST: api/MobilePhone
-        public async Task<HttpResponseMessage> PostAsync([FromBody] MobilePhone mobilePhone)
+        public async Task<HttpResponseMessage> PostAsync([FromBody] MobilePhonePost mobilePhonePost)
         {
-            if (mobilePhone == null)
+            if (mobilePhonePost == null)
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest);
             }
 
-            try 
-            { 
-                await MobilePhoneService.AddAsync(mobilePhone);
-            }
-            catch (Exception e)
+            IMobilePhone mobilePhone = new MobilePhone
             {
-                return Request.CreateResponse(HttpStatusCode.BadGateway, e.Message);
+                Id = Guid.NewGuid(),
+                Brand = mobilePhonePost.Brand,
+                Model = mobilePhonePost.Model,
+                OperatingSystem = mobilePhonePost.OperatingSystem,
+                StorageCapacityGB = mobilePhonePost.StorageCapacity,
+                RamGB = mobilePhonePost.Ram,
+                Color = mobilePhonePost.Color
+            };
+            int rowsAffected = await _mobilePhoneService.AddAsync(mobilePhone);
+            if (rowsAffected <= 0)
+            {
+                return Request.CreateResponse(HttpStatusCode.BadGateway, "Error while adding mobile phone");
             }
-            return Request.CreateResponse(HttpStatusCode.Created);
+            return Request.CreateResponse(HttpStatusCode.Created, mobilePhone);
+            
         }
 
         // POST: api/MobilePhone/5
@@ -73,20 +81,24 @@ namespace Test.WebApi.Controllers
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest);
             }
-            IMobilePhone mobilePhone = await MobilePhoneService.GetByIdAsync(mobilePhoneId);
+            IMobilePhone mobilePhone = await _mobilePhoneService.GetByIdAsync(mobilePhoneId);
             if (mobilePhone == null)
             {
                 return Request.CreateResponse(HttpStatusCode.NotFound, "Mobile phone with this ID doesn't exists");
             }
-
+            int rowsAffected;
             try
             {
-                await MobilePhoneService.AddShopsAsync(mobilePhoneId, shopsId);
-                mobilePhone = await MobilePhoneService.GetByIdAsync(mobilePhoneId, true);
+                rowsAffected = await _mobilePhoneService.AddShopsAsync(mobilePhoneId, shopsId);
+                mobilePhone = await _mobilePhoneService.GetByIdAsync(mobilePhoneId, true);
             }
             catch (Exception e)
             {
                 return Request.CreateResponse(HttpStatusCode.BadGateway, e.Message);
+            }
+            if (rowsAffected <= 0)
+            {
+                return Request.CreateResponse(HttpStatusCode.BadGateway, "Error while adding shops to mobile phone");
             }
             return Request.CreateResponse(HttpStatusCode.Created, mobilePhone);
         }
@@ -98,51 +110,40 @@ namespace Test.WebApi.Controllers
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest);
             }
-            IMobilePhone mobilePhone = await MobilePhoneService.GetByIdAsync(id);
-            if (mobilePhone == null)
+            int rowsAffected = await _mobilePhoneService.UpdateAsync(id, new MobilePhone()
+            {
+                OperatingSystem = mobilePhoneUpdate.OperatingSystem,
+                StorageCapacityGB = mobilePhoneUpdate.StorageCapacityGB,
+                RamGB = mobilePhoneUpdate.RamGB,
+                Color = mobilePhoneUpdate.Color
+            });
+            if (rowsAffected == 0)
             {
                 return Request.CreateResponse(HttpStatusCode.NotFound, "Mobile phone with this ID doesn't exists");
             }
-
-            try
+            else if (rowsAffected < 0)
             {
-                await MobilePhoneService.UpdateAsync(id, new MobilePhone()
-                {
-                    OperatingSystem = mobilePhoneUpdate.OperatingSystem,
-                    StorageCapacityGB = mobilePhoneUpdate.StorageCapacityGB,
-                    RamGB = mobilePhoneUpdate.RamGB,
-                    Color = mobilePhoneUpdate.Color
-                });
-                mobilePhone = await MobilePhoneService.GetByIdAsync(id);
+                return Request.CreateResponse(HttpStatusCode.BadGateway, "Error while updating mobile phone");
             }
-            catch (Exception e)
-            {
-                return Request.CreateResponse(HttpStatusCode.BadGateway, e.Message);
-            }
-            return Request.CreateResponse(HttpStatusCode.OK, mobilePhone);
+            IMobilePhone mobilePhone = await _mobilePhoneService.GetByIdAsync(id);
+            return Request.CreateResponse(HttpStatusCode.OK, mobilePhone); 
         }
 
         // DELETE: api/MobilePhone/5
-        public async Task<HttpResponseMessage> DeleteAsync(Guid id)
+        public async Task<HttpResponseMessage> DeleteAsync(Guid? id)
         {
             if(id == null)
             {
-                return Request.CreateResponse(HttpStatusCode.BadRequest);
+                return Request.CreateResponse(HttpStatusCode.BadRequest, "ID is invalid");
             }
-            IMobilePhone mobilePhone = await MobilePhoneService.GetByIdAsync(id);
-
-            if (mobilePhone == null)
+            int rowsAffected = await _mobilePhoneService.DeleteAsync(id.Value);
+            if (rowsAffected == 0)
             {
                 return Request.CreateResponse(HttpStatusCode.NotFound, "Mobile phone with this ID doesn't exists");
-            }
-
-            try
+            } 
+            else if (rowsAffected < 0)
             {
-                await MobilePhoneService.DeleteAsync(id);
-            }
-            catch (Exception e)
-            {
-                return Request.CreateResponse(HttpStatusCode.BadGateway, e.Message);
+                return Request.CreateResponse(HttpStatusCode.BadGateway, "Error while deleting mobile phone");
             }
             
             return Request.CreateResponse(HttpStatusCode.NoContent);

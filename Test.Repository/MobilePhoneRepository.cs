@@ -1,8 +1,6 @@
 ﻿using Npgsql;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Test.Common;
@@ -127,7 +125,7 @@ namespace Test.Repository
             return mobilePhone;
         }
 
-        public async Task AddAsync(IMobilePhone mobilePhone)
+        public async Task<int> AddAsync(IMobilePhone mobilePhone)
         {
             NpgsqlConnection connection = new NpgsqlConnection(Constants.ConnectionString);
             using (connection)
@@ -136,8 +134,7 @@ namespace Test.Repository
                 command.CommandText = $"INSERT INTO \"MobilePhone\" (\"Id\", \"Brand\", \"Model\", \"OperatingSystem\", \"StorageCapacityGB\", \"RamGB\", \"Color\") " +
                     "VALUES (@id, @brand, @model, @operatingSystem, @storageCapacityGB, @ramGB, @color)";
                 command.Connection = connection;
-                Guid id = Guid.NewGuid();
-                command.Parameters.AddWithValue("id", id);
+                command.Parameters.AddWithValue("id", mobilePhone.Id);
                 command.Parameters.AddWithValue("brand", mobilePhone.Brand);
                 command.Parameters.AddWithValue("model", mobilePhone.Model);
                 command.Parameters.AddWithValue("operatingSystem", mobilePhone.OperatingSystem);
@@ -147,11 +144,11 @@ namespace Test.Repository
                 try
                 {
                     await connection.OpenAsync();
-                    await command.ExecuteNonQueryAsync();
+                    return await command.ExecuteNonQueryAsync();
                 }
-                catch (NpgsqlException e)
+                catch
                 {
-                    throw e;
+                    return -1;
                 }
                 finally
                 {
@@ -160,13 +157,8 @@ namespace Test.Repository
             }
         }
 
-        public async Task AddShopsAsync(Guid mobilePhoneId, List<Guid> shopIds)
+        public async Task<int> AddShopsAsync(Guid mobilePhoneId, List<Guid> shopIds)
         {
-            IMobilePhone mobilePhone = await GetByIdAsync(mobilePhoneId);
-            if (mobilePhone == null)
-            {
-                throw new Exception("MobilePhone not found");
-            }
             NpgsqlConnection connection = new NpgsqlConnection(Constants.ConnectionString);
             using (connection)
             {
@@ -193,18 +185,19 @@ namespace Test.Repository
                     catch (NpgsqlException e)
                     {
                         await transaction.RollbackAsync();
-                        throw e;
+                        return -1;
                     }
                 }
             }
+            return 1;
         }
 
-        public async Task UpdateAsync(Guid id, IMobilePhone newMobilePhone)
+        public async Task<int> UpdateAsync(Guid id, IMobilePhone newMobilePhone)
         {
             IMobilePhone mobilePhone = await GetByIdAsync(id); 
             if (mobilePhone == null)
             {
-               throw new Exception("MobilePhone not found");
+                return 0;
             }
             NpgsqlConnection connection = new NpgsqlConnection(Constants.ConnectionString);
             using (connection)
@@ -222,7 +215,7 @@ namespace Test.Repository
                 try
                 {
                     await connection.OpenAsync();
-                    await command.ExecuteNonQueryAsync();
+                    return await command.ExecuteNonQueryAsync();
                 }
                 catch (NpgsqlException e)
                 {
@@ -235,7 +228,7 @@ namespace Test.Repository
             }
         }
 
-        public async Task DeleteAsync(Guid id)
+        public async Task<int> DeleteAsync(Guid id)
         {
             NpgsqlConnection connection = new NpgsqlConnection(Constants.ConnectionString);
             using (connection)
@@ -247,11 +240,11 @@ namespace Test.Repository
                 try
                 {
                     await connection.OpenAsync();
-                    await command.ExecuteNonQueryAsync();
+                    return await command.ExecuteNonQueryAsync();         
                 }
                 catch (NpgsqlException e)
                 {
-                    throw e;
+                    return -1;
                 }
                 finally
                 {

@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.Web.Http;
 using Test.Model;
 using Test.Model.Common;
-using Test.Service;
 using Test.Service.Common;
 using Test.WebApi.Models;
 
@@ -14,11 +13,11 @@ namespace Test.WebApi.Controllers
 {
     public class ShopController : ApiController
     {
-        private readonly IShopService ShopService;
+        private readonly IShopService _shopService;
 
         public ShopController(IShopService shopService)
         {
-            ShopService = shopService;
+            _shopService = shopService;
         }
 
         // GET: api/Shop
@@ -26,7 +25,7 @@ namespace Test.WebApi.Controllers
         {
             List<IShop> shops;
             try {
-                shops = await ShopService.GetAllAsync();
+                shops = await _shopService.GetAllAsync();
             }
             catch (Exception e)
             {
@@ -41,7 +40,7 @@ namespace Test.WebApi.Controllers
             IShop shop;
             try 
             {
-                shop = await ShopService.GetByIdAsync(id);
+                shop = await _shopService.GetByIdAsync(id);
             }
             catch (Exception e)
             {
@@ -49,27 +48,33 @@ namespace Test.WebApi.Controllers
             }
             if (shop == null)
             {
-                return Request.CreateResponse(HttpStatusCode.NotFound);
+                return Request.CreateResponse(HttpStatusCode.NotFound, "Shop with this ID doesn't exists");
             }
             return Request.CreateResponse(HttpStatusCode.OK, shop);
         }
 
         // POST: api/Shop
-        public async Task<HttpResponseMessage> PostAsync([FromBody]Shop shop)
+        public async Task<HttpResponseMessage> PostAsync([FromBody]ShopPost shopPost)
         {
-            if (shop == null)
+            if (shopPost == null)
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest);
             }
-            try
+            IShop shop = new Shop()
             {
-                await ShopService.AddAsync(shop);
-            }
-            catch (Exception e)
+                Id = Guid.NewGuid(),
+                Name = shopPost.Name,
+                Address = shopPost.Address,
+                Mail = shopPost.Mail,
+                PhoneNumber = shopPost.PhoneNumber
+            };
+            int affectedRows = await _shopService.AddAsync(shop);
+            
+            if (affectedRows <= 0)
             {
-                return Request.CreateResponse(HttpStatusCode.BadRequest, e.Message);
+                return Request.CreateResponse(HttpStatusCode.BadGateway, "Error while adding shop");
             }
-            return Request.CreateResponse(HttpStatusCode.Created);
+            return Request.CreateResponse(HttpStatusCode.Created, shop);
         }
 
         // PUT: api/Shop/5
@@ -79,38 +84,37 @@ namespace Test.WebApi.Controllers
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest);
             }
-            IShop shop = await ShopService.GetByIdAsync(id);
-            if (shop == null)
+            int affectedRows = await _shopService.UpdateAsync(id, new Shop()
             {
-                return Request.CreateResponse(HttpStatusCode.NotFound);
-            }
-            try
+                Name = newShop.Name,
+                Address = newShop.Address,
+                Mail = newShop.Mail,
+                PhoneNumber = newShop.PhoneNumber
+            });
+            if (affectedRows == 0)
             {
-                await ShopService.UpdateAsync(id, new Shop()
-                {
-                    Name = newShop.Name,
-                    Address = newShop.Address,
-                    Mail = newShop.Mail,
-                    PhoneNumber = newShop.PhoneNumber
-                });
-                shop = await ShopService.GetByIdAsync(id);
+                return Request.CreateResponse(HttpStatusCode.NotFound, "Shop with this ID doesn't exists");
             }
-            catch (Exception e)
+            else if (affectedRows < 0)
             {
-                return Request.CreateResponse(HttpStatusCode.BadRequest, e.Message);
+                return Request.CreateResponse(HttpStatusCode.BadGateway, "Error while updating shop");
             }
+            IShop shop = await _shopService.GetByIdAsync(id);
             return Request.CreateResponse(HttpStatusCode.OK, shop);
         }
 
         // DELETE: api/Shop/5
         public async Task<HttpResponseMessage> DeleteAsync(Guid id)
         {
-            IShop shop = await ShopService.GetByIdAsync(id);
-            if (shop == null)
+            int rowsAffected = await _shopService.DeleteAsync(id);
+            if (rowsAffected == 0)
             {
                 return Request.CreateResponse(HttpStatusCode.NotFound, "Shop with this ID doesn't exists");
             }
-            await ShopService.DeleteAsync(id);
+            else if (rowsAffected == -1)
+            {
+                return Request.CreateResponse(HttpStatusCode.InternalServerError);
+            }
             return Request.CreateResponse(HttpStatusCode.NoContent);
         }
     }

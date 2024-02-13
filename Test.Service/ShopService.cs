@@ -44,40 +44,19 @@ namespace Test.Service
             }
         }
 
-        public async Task AddAsync(IShop shop)
+        public async Task<int> AddAsync(IShop shop)
         {
-            try
-            {
-                await ShopRepository.AddAsync(shop);
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
+            return await ShopRepository.AddAsync(shop);
         }
 
-        public async Task UpdateAsync(Guid id, IShop shop)
+        public async Task<int> UpdateAsync(Guid id, IShop shop)
         {
-            try
-            {
-                await ShopRepository.UpdateAsync(id, shop);
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
+            return await ShopRepository.UpdateAsync(id, shop);
         }
 
-        public async Task DeleteAsync(Guid id)
+        public async Task<int> DeleteAsync(Guid id)
         {
-            try
-            {
-                await ShopRepository.DeleteAsync(id);
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
+            return await ShopRepository.DeleteAsync(id);
         }
     }
 }

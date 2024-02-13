@@ -12,8 +12,8 @@ namespace Test.Repository.Common
     {
         Task<List<IShop>> GetAllAsync();
         Task<IShop> GetByIdAsync(Guid id);
-        Task AddAsync(IShop shop);
-        Task UpdateAsync(Guid id, IShop shop);
-        Task DeleteAsync(Guid id);
+        Task<int> AddAsync(IShop shop);
+        Task<int> UpdateAsync(Guid id, IShop shop);
+        Task<int> DeleteAsync(Guid id);
     }
 }
