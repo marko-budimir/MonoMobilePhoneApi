@@ -22,12 +22,12 @@ namespace Test.Repository
             {
                 NpgsqlCommand command = new NpgsqlCommand();
                 command.Connection = connection;
-                if (filter != null)
-                {
-                    ApplyFilter(command, filter);
-                    ApplySorting(command, sorting);
-                    await ApplyPagingAsync(command, paging);
-                }
+                command.CommandText = "SELECT * FROM \"MobilePhone\"";
+                ApplyFilter(command, filter);
+                ApplySorting(command, sorting);
+                int itemCount = await GetItemCountAsync(filter);
+                ApplyPaging(command, paging, itemCount);
+
                 try
                 {
                     await connection.OpenAsync();
@@ -258,8 +258,8 @@ namespace Test.Repository
 
         private void ApplyFilter(NpgsqlCommand command, MobilePhoneFilter filter)
         {
-            StringBuilder commandText = new StringBuilder();
-            commandText.Append("SELECT * FROM \"MobilePhone\"");
+            StringBuilder commandText = new StringBuilder(command.CommandText);
+
             if(filter.ShopId != null)
             {
                 commandText.Append(" LEFT JOIN \"MobilePhoneShop\" ON \"MobilePhone\".\"Id\" = \"MobilePhoneShop\".\"MobilePhoneId\" WHERE \"MobilePhoneShop\".\"ShopId\" = @shopId");
@@ -311,25 +311,30 @@ namespace Test.Repository
             command.CommandText = commandText.ToString();
         }
 
-        private async Task ApplyPagingAsync(NpgsqlCommand command, Paging paging)
+        private void ApplyPaging(NpgsqlCommand command, Paging paging, int itemCount)
         {
             StringBuilder commandText = new StringBuilder(command.CommandText);
-            int itemCount = await GetItemCountAsync();
             int currentItem = (paging.PageNumber - 1) * paging.PageSize;
             if (currentItem >= 0 && currentItem < itemCount)
             {
                 commandText.Append(" LIMIT ").Append(paging.PageSize).Append(" OFFSET ").Append(currentItem);
                 command.CommandText = commandText.ToString();
             }
+            else
+            {
+                commandText.Append(" LIMIT 10");
+                command.CommandText = commandText.ToString();
+            }
         }
 
-        private async Task<int> GetItemCountAsync() 
+        private async Task<int> GetItemCountAsync(MobilePhoneFilter filter) 
         {
             NpgsqlConnection connection = new NpgsqlConnection(Constants.ConnectionString);
             using (connection)
             {
                 NpgsqlCommand command = new NpgsqlCommand();
                 command.CommandText = "SELECT COUNT(\"Id\") FROM \"MobilePhone\"";
+                ApplyFilter(command, filter);
                 command.Connection = connection;
                 try
                 {
