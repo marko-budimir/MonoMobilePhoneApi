@@ -9,7 +9,6 @@ using Test.Model.Common;
 using Test.Service.Common;
 using Test.WebApi.Models;
 
-
 namespace Test.WebApi.Controllers
 {
     public class ShopController : ApiController
