@@ -58,7 +58,7 @@ namespace Test.WebApi.Controllers
                 PageNumber = pageNumber,
                 PageSize = pageSize
             };
-            List<IMobilePhone> mobilePhones;
+            PagedList<IMobilePhone> mobilePhones;
             try { 
                 mobilePhones = await _mobilePhoneService.GetAllAsync(filter, sorting, paging);
             }
@@ -94,8 +94,8 @@ namespace Test.WebApi.Controllers
                 Brand = mobilePhonePost.Brand,
                 Model = mobilePhonePost.Model,
                 OperatingSystem = mobilePhonePost.OperatingSystem,
-                StorageCapacityGB = mobilePhonePost.StorageCapacity,
-                RamGB = mobilePhonePost.Ram,
+                StorageCapacityGB = mobilePhonePost.StorageCapacityGB,
+                RamGB = mobilePhonePost.RamGB,
                 Color = mobilePhonePost.Color
             };
             int rowsAffected = await _mobilePhoneService.AddAsync(mobilePhone);

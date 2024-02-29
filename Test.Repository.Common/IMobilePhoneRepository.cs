@@ -11,7 +11,7 @@ namespace Test.Repository.Common
 {
     public interface IMobilePhoneRepository
     {
-        Task<List<IMobilePhone>> GetAllAsync(MobilePhoneFilter filter, Sorting sorting, Paging paging);
+        Task<PagedList<IMobilePhone>> GetAllAsync(MobilePhoneFilter filter, Sorting sorting, Paging paging);
         Task<IMobilePhone> GetByIdAsync(Guid id, bool includeShops = false);
         Task<int> AddAsync(IMobilePhone mobilePhone);
         Task<int> AddShopsAsync(Guid mobilePhoneId, List<Guid> shopIds);

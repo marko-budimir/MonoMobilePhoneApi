@@ -19,7 +19,7 @@ namespace Test.Service
             _shopRepository = shopRepository;
         }
 
-        public async Task<List<IMobilePhone>> GetAllAsync(MobilePhoneFilter filter, Sorting sorting, Paging paging)
+        public async Task<PagedList<IMobilePhone>> GetAllAsync(MobilePhoneFilter filter, Sorting sorting, Paging paging)
         {
             try
             {

@@ -14,10 +14,11 @@ namespace Test.Repository
 {
     public class MobilePhoneRepository : IMobilePhoneRepository
     {
-        public async Task<List<IMobilePhone>> GetAllAsync(MobilePhoneFilter filter, Sorting sorting, Paging paging)
+        public async Task<PagedList<IMobilePhone>> GetAllAsync(MobilePhoneFilter filter, Sorting sorting, Paging paging)
         {
             List<IMobilePhone> mobilePhones = new List<IMobilePhone>();
             NpgsqlConnection connection = new NpgsqlConnection(Constants.ConnectionString);
+            int itemCount = 0;
             using (connection)
             {
                 NpgsqlCommand command = new NpgsqlCommand();
@@ -25,7 +26,7 @@ namespace Test.Repository
                 command.CommandText = "SELECT * FROM \"MobilePhone\"";
                 ApplyFilter(command, filter);
                 ApplySorting(command, sorting);
-                int itemCount = await GetItemCountAsync(filter);
+                itemCount = await GetItemCountAsync(filter);
                 ApplyPaging(command, paging, itemCount);
 
                 try
@@ -55,7 +56,7 @@ namespace Test.Repository
                     await connection.CloseAsync();
                 }
             }
-            return mobilePhones;
+            return new PagedList<IMobilePhone>(mobilePhones, paging.PageNumber, paging.PageSize, itemCount);
         }
 
         public async Task<IMobilePhone> GetByIdAsync(Guid id, bool includeShops = false)
